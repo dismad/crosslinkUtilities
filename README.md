@@ -2,7 +2,7 @@
 
 Small collection of bash helpers for interacting with a local [Crosslink](https://github.com/ShieldedLabs/crosslink_monolith) (zebra-crosslink) node via JSON-RPC.
 
-These scripts are intended for the Crosslink incentivized feature nets / testnets. They make it easy to inspect staking positions, rewards, Staking Day windows, and basic TFL status.
+These scripts are intended for the Crosslink incentivized feature nets / testnets. They make it easy to inspect staking positions, rewards, Staking Day windows, finalizer roster, finality status, and individual bonds.
 
 ## Requirements
 
@@ -31,6 +31,8 @@ One-shot overview (recommended daily driver).
 Shows:
 - Current height
 - Whether you are currently inside a Staking Day + blocks remaining / until next
+- Whether TFL is activated
+- Current finalized tip (height + hash)
 - Number of active + withdrawable bonds
 - Total staking rewards earned
 
@@ -51,7 +53,7 @@ List individual position rewards and/or the total.
 Detailed view of every staking position (active + withdrawable), including:
 
 - Finalizer
-- `bond_key` / `pk` (needed for `wallet_staking_action`)
+- `bond_key` / `pk` (needed for `wallet_staking_action` and `bondinfo.sh`)
 - create height
 - initial / latest value
 - rewards earned
@@ -74,11 +76,44 @@ Simple check of the current Staking Day window.
 
 Staking / unbonding / withdrawing is only allowed during the open window. Retargeting is allowed at any time.
 
+### `roster.sh`
+
+Show the current finalizer roster and stake distribution.
+
+```bash
+./roster.sh                   # stake shown in ZEC
+./roster.sh -z                # stake shown in zatoshis
+./roster.sh --zats
+```
+
+### `finality.sh`
+
+Show the current finalized tip and optionally check finality of a specific block or transaction.
+
+```bash
+./finality.sh                           # current finalized tip only
+./finality.sh -b <block_hash>           # check a block hash
+./finality.sh --block <block_hash>
+./finality.sh -t <txid>                 # check a transaction hash
+./finality.sh --tx <txid>
+```
+
+### `bondinfo.sh`
+
+Lookup detailed information for a single bond.
+
+```bash
+./bondinfo.sh <bond_key>
+```
+
+`bond_key` is the `pk` field returned by `listStakingInfo.sh` / `wallet_staking_positions`.
+
 ## Notes
 
-- All amounts are converted from zatoshis (`/ 1e8`) and displayed in ZEC.
+- All amounts are converted from zatoshis (`/ 1e8`) and displayed in ZEC where appropriate.
 - `bond_key` values come from the `pk` field returned by `wallet_staking_positions`.
-- These scripts only **read** data. They do not submit staking actions.
+- These scripts only **read** data (except when you later add action wrappers). They do not submit staking transactions.
+- For the full set of wallet staking RPCs (`wallet_staking_action`, etc.) see the [v13_rc1 release notes](https://github.com/ShieldedLabs/crosslink_monolith/releases/tag/v13_rc1).
 
 ## License
 
