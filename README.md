@@ -4,6 +4,25 @@ Small collection of bash helpers for interacting with a local [Crosslink](https:
 
 These scripts are intended for the Crosslink incentivized feature nets / testnets. They make it easy to inspect staking positions, rewards, Staking Day windows, finalizer roster, finality status, and individual bonds.
 
+## Quick Install
+
+```bash
+curl -sL https://raw.githubusercontent.com/dismad/crosslinkUtilities/main/install.sh | bash
+```
+
+This will:
+- Check for `curl` and `jq` (and install them if missing)
+- Download all scripts into `~/crosslinkUtilities`
+- Make them executable
+
+Install to a custom directory:
+
+```bash
+curl -sL https://raw.githubusercontent.com/dismad/crosslinkUtilities/main/install.sh | bash -s -- ~/bin
+```
+
+After installing, either add the directory to your `PATH` or run the scripts with the full path.
+
 ## Requirements
 
 - `curl`
@@ -112,7 +131,7 @@ Lookup detailed information for a single bond.
 
 - All amounts are converted from zatoshis (`/ 1e8`) and displayed in ZEC where appropriate.
 - `bond_key` values come from the `pk` field returned by `wallet_staking_positions`.
-- These scripts only **read** data (except when you later add action wrappers). They do not submit staking transactions.
+- These scripts only **read** data. They do not submit staking transactions.
 - For the full set of wallet staking RPCs (`wallet_staking_action`, etc.) see the [v13_rc1 release notes](https://github.com/ShieldedLabs/crosslink_monolith/releases/tag/v13_rc1).
 
 ## License
