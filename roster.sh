@@ -1,56 +1,66 @@
 #!/usr/bin/env bash
-# Show current finalizer roster (stake in ZEC by default)
-
+Show current finalizer roster
 RPC="${ZEBRAD_RPC:-http://127.0.0.1:8232}"
 USE_ZATS=false
+RAW=false
 
 while [[ $# -gt 0 ]]; do
   case $1 in
     -z|--zats) USE_ZATS=true; shift ;;
+    -r|--raw)  RAW=true; shift ;;
     -h|--help)
-      echo "Usage: $0 [-z|--zats]"
-      echo "  -z, --zats   show stake in zatoshis instead of ZEC"
+      echo "Usage: $0 [-z|--zats] [-r|--raw]"
+      echo "  -z, --zats   use get_tfl_roster_zats"
+      echo "  -r, --raw    dump raw JSON"
       exit 0
       ;;
     *) echo "Unknown option: $1" >&2; exit 1 ;;
   esac
 done
 
-METHOD="get_tfl_roster_zec"
 if $USE_ZATS; then
   METHOD="get_tfl_roster_zats"
+else
+  METHOD="get_tfl_roster_zec"
 fi
+
+PAYLOAD=$(printf '{"jsonrpc":"2.0","method":"%s","params":[],"id":1}' "$METHOD")
 
 echo
 echo "=== Finalizer Roster ($METHOD) ==="
 echo
 
-RESULT=$(curl -s -X POST -H "Content-Type: application/json" \
-  -d "{\"jsonrpc\":\"2.0\",\"method\":\"$METHOD\",\"params\":[],\"id\":1}" \
+BODY=$(curl -s -X POST \
+  -H "Content-Type: application/json" \
+  -d "$PAYLOAD" \
   "$RPC")
 
-if [[ -z "$RESULT" ]]; then
-  echo "No response from $RPC" >&2
+if [[ -z "$BODY" ]]; then
+  echo "Empty response. Is the node running?"
   exit 1
 fi
 
-# Flexible pretty-print – works with common field names
-echo "$RESULT" | jq -r '
-  if .result == null then
-    "  (null / empty roster)"
-  elif (.result | type) == "array" then
-    if (.result | length) == 0 then
-      "  (empty)"
-    else
-      .result[] |
-      (
-        (.finalizer // .pubkey // .pk // .id // "unknown") as $id |
-        (.stake_zec // .zec // .stake // .amount // .zats // 0) as $stake |
-        "  \($id)  →  \($stake)"
-      )
-    end
+if $RAW; then
+  echo "$BODY" | jq .
+  echo
+  exit 0
+fi
+
+echo "$BODY" | jq -r '
+  if .error then
+    "RPC error: " + (.error.message // (.error|tostring))
+  elif .result == null then
+    "result is null"
+  elif (.result | type) != "array" then
+    "Unexpected result type: " + (.result|type)
+  elif (.result | length) == 0 then
+    "(empty roster)"
   else
-    .
+    .result
+    | sort_by(.[1])
+    | reverse
+    | .[]
+    | "  " + (.[0]|tostring) + "  →  " + (.[1]|tostring)
   end
 '
 echo
