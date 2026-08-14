@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# crosslink-status.sh – short summary by default, full TFL only with -f/--full
+# crosslink-status.sh – short summary by default, full TFL with -f/--full
+
 RPC="${ZEBRAD_RPC:-http://127.0.0.1:8232}"
 SHOW_FULL_TFL=false
 
@@ -38,6 +39,20 @@ fi
 echo "Height:          $HEIGHT"
 echo "Staking Day:     $DAY_STATUS"
 
+# TFL activated?
+TFL_ACTIVE=$(curl -s -X POST -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"is_tfl_activated","params":[],"id":1}' \
+  "$RPC" | jq -r '.result // "unknown"')
+echo "TFL activated:   $TFL_ACTIVE"
+
+# Finalized tip
+TIP=$(curl -s -X POST -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","method":"get_tfl_final_block_height_and_hash","params":[],"id":1}' \
+  "$RPC")
+TIP_HEIGHT=$(echo "$TIP" | jq -r '.result.height // .result.block_height // "unknown"')
+TIP_HASH=$(echo "$TIP" | jq -r '.result.hash // .result.block_hash // "unknown"')
+echo "Finalized tip:   $TIP_HEIGHT ($TIP_HASH)"
+
 # Positions + rewards
 POS=$(curl -s -X POST -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"wallet_staking_positions","params":[],"id":1}' \
@@ -52,7 +67,7 @@ echo "Withdrawable:    $WITHDRAWABLE_COUNT"
 echo "Total rewards:   ${TOTAL_REWARDS} ZEC"
 echo
 
-# TFL section
+# Optional full TFL dump
 if $SHOW_FULL_TFL; then
   echo "=== Full TFL Recency Status ==="
   curl -s -X POST -H "Content-Type: application/json" \
