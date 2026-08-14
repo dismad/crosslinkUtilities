@@ -15,6 +15,7 @@ SCRIPTS=(
   roster.sh
   finality.sh
   bondinfo.sh
+  listBlockTxs.sh
 )
 
 TARGET_DIR="${1:-$HOME/crosslinkUtilities}"
@@ -64,7 +65,6 @@ install_deps() {
     exit 1
   fi
 
-  # Final check
   if ! need_cmd curl || ! need_cmd jq; then
     echo "Failed to install curl and/or jq." >&2
     exit 1
@@ -99,4 +99,5 @@ echo "  export PATH=\"\$PATH:$TARGET_DIR\""
 echo
 echo "Example:"
 echo "  $TARGET_DIR/crosslinkStatus.sh"
+echo "  $TARGET_DIR/listBlockTxs.sh 12345"
 echo
